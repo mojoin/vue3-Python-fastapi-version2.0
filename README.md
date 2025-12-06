@@ -30,10 +30,9 @@ python main.py
 
 ## 使用说明
 
-1. 上传CSV格式的监测数据文件
+1. 上传CSV格式的监测数据文件（如果没有数据可在网站下载"全站仪.csv","水准仪.csv"这两个数据上传至后端服务端用作模板，同时也可用作无数据用户测试）
 2. 系统自动分析并生成可视化图表
 3. 查看关键变形指标
-4. 下载专业监测报告
 <img width="" height="" alt="image" src="https://github.com/user-attachments/assets/cc5fbcf1-27b0-423c-8e7b-b420368a6775" />
 
 ## 数据格式
