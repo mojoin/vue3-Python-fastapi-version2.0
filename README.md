@@ -22,10 +22,10 @@ python main.py
 > 本地部署安装好对应虚拟环境后，启动python，网页端口为http://localhost:8001
 ### 在线访问
 部署后可通过提供的URL直接访问使用。
-render不稳定网站https://vue3-python-fastapi.onrender.com/
-netlify+vercel稳定访问网站：https://cheerful-babka-5d16d3.netlify.app/
-netlify+vercel稳定访问网站（赛博朋克版）：https://cyberpunk-dibiaobianxing.netlify.app/
-> 注：该网站部署于render免费web服务，网页15分钟内未有人访问将进入休眠，休眠状态再次访问会将重启服务器界面展示如下。此情况只需耐心重启即可，中国区域白天约1分钟内重启成攻，晚上约3-4分钟
+- render不稳定网站https://vue3-python-fastapi.onrender.com/
+- netlify+vercel稳定访问网站：https://cheerful-babka-5d16d3.netlify.app/
+- netlify+vercel稳定访问网站（赛博朋克版）：https://cyberpunk-dibiaobianxing.netlify.app/
+> 注：（此注意事项仅对render部署的网站）该网站部署于render免费web服务，网页15分钟内未有人访问将进入休眠，休眠状态再次访问会将重启服务器界面展示如下。此情况只需耐心重启即可，中国区域白天约1分钟内重启成攻，晚上约3-4分钟
 <img width="" height="" alt="61539845595189312dc207deebaba426" src="https://github.com/user-attachments/assets/fb79e90a-7bd8-406d-8f51-96c551f2210f" />
 
 ## 使用说明
@@ -34,12 +34,7 @@ netlify+vercel稳定访问网站（赛博朋克版）：https://cyberpunk-dibiao
 2. 系统自动分析并生成可视化图表
 3. 查看关键变形指标
 4. 下载专业监测报告
-<<<<<<< HEAD
 <img width="" height="" alt="image" src="https://github.com/user-attachments/assets/cc5fbcf1-27b0-423c-8e7b-b420368a6775" />
-=======
-<img width="1912" height="948" alt="image" src="https://github.com/user-attachments/assets/cc5fbcf1-27b0-423c-8e7b-b420368a6775" />
->>>>>>> ae1dbd034fe6ae1d3fb1b1446848b2ff0d0472d4
-
 
 ## 数据格式
 
@@ -47,11 +42,5 @@ netlify+vercel稳定访问网站（赛博朋克版）：https://cyberpunk-dibiao
 - 全站仪格式：包含X、Y、Z坐标数据
 - 水准仪格式：包含Z方向沉降数据
 - 可以导出学术论文风格图片
-<<<<<<< HEAD
 <img width="" height="" alt="学术图表_累计沉降_2025-12-05" src="https://github.com/user-attachments/assets/95089be2-ed63-4181-8e71-d3f299edbc21" />
-=======
-<img width="2952" height="1752" alt="学术图表_累计沉降_2025-12-05" src="https://github.com/user-attachments/assets/95089be2-ed63-4181-8e71-d3f299edbc21" />
->>>>>>> ae1dbd034fe6ae1d3fb1b1446848b2ff0d0472d4
 
-
-详细格式请参考项目中的示例文件。
