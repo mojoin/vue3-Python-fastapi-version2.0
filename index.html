@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地表移动变形监测分析平台 Pro</title>
+    <script src="https://cdn.staticfile.net/vue/3.3.4/vue.global.prod.min.js"></script>
+    <script src="https://cdn.staticfile.net/axios/1.6.2/axios.min.js"></script>
+    <script src="https://cdn.staticfile.net/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<div id="app" v-cloak class="min-h-screen flex flex-col">
+    <header class="bg-slate-900 text-white shadow-lg z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="ph-fill ph-planet text-2xl text-blue-400"></i>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wide">地表监测智能分析平台</h1>
+                    <p class="text-[10px] text-slate-400 uppercase">Surface Subsidence Monitor System</p>
+                </div>
+            </div>
+            <div class="text-xs bg-slate-800 px-3 py-1 rounded-full text-blue-300">
+                <i class="ph-bold ph-check-circle"></i> 支持全站仪/水准仪自动识别
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-3 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-xs font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-upload-simple"></i> 数据导入
+                </h2>
+                
+                <div class="relative group border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-blue-50 hover:border-blue-500 transition cursor-pointer">
+                    <input type="file" @change="handleFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div v-if="!file" class="text-slate-400">
+                        <i class="ph-duotone ph-file-csv text-4xl mb-2"></i>
+                        <p class="text-sm">点击上传 CSV 数据文件</p>
+                    </div>
+                    <div v-else>
+                        <i class="ph-fill ph-file-csv text-4xl text-green-500 mb-2"></i>
+                        <p class="text-sm font-bold text-slate-700 truncate">{{ file.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <a href="/files/全站仪.csv" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1">
+                        <i class="ph-bold ph-download-simple"></i> 全站仪模板
+                    </a>
+                    <a href="/files/水准.csv" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1">
+                        <i class="ph-bold ph-download-simple"></i> 水准模板
+                    </a>
+                </div>
+                
+                <button @click="analyze" :disabled="!file || loading" 
+                    class="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i v-if="loading" class="ph-bold ph-spinner animate-spin"></i>
+                    <span>{{ loading ? '智能分析中...' : '开始计算' }}</span>
+                </button>
+            </div>
+
+            <div v-if="stats" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <h3 class="text-sm font-bold text-slate-700 mb-3 border-b pb-2">极值摘要</h3>
+                <div class="space-y-3">
+                    <div v-for="(v, k) in stats" :key="k" class="text-xs">
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium text-slate-500">{{ v.label }}</span>
+                            <span class="bg-slate-100 px-1.5 rounded text-slate-400 font-mono">{{ k }}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded">
+                            <div>
+                                <span class="block text-red-500 font-bold">{{ v.max }}</span>
+                                <span class="block text-[10px] text-slate-400">Max @{{ v.max_pt }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-green-500 font-bold">{{ v.min }}</span>
+                                <span class="block text-[10px] text-slate-400">Min @{{ v.min_pt }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-9 flex flex-col gap-4">
+            <div v-if="result" class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                
+                <div class="flex flex-wrap gap-2">
+                    <button v-for="item in metricOptions" :key="item.key"
+                        @click="setTab(item.key)"
+                        v-show="!item.reqTotal || result.is_total_station"
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 border"
+                        :class="tab === item.key ? item.activeClass : item.inactiveClass">
+                        <i :class="['ph-fill text-lg', item.icon]"></i>
+                        <span>{{ item.label }}</span>
+                    </button>
+                </div>
+
+                <div class="pl-3 border-l border-slate-200">
+                    <button @click="exportImg" :disabled="exporting"
+                        class="group relative flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 hover:shadow-lg hover:shadow-slate-200 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+                        <i v-if="exporting" class="ph-bold ph-spinner animate-spin"></i>
+                        <i v-else class="ph-bold ph-image group-hover:scale-110 transition-transform"></i>
+                        <span>导出当前图表</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex-grow relative min-h-[500px]">
+                <div v-if="!result" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
+                    <i class="ph-duotone ph-chart-line-up text-6xl mb-4"></i>
+                    <p>暂无数据，请上传文件开始分析</p>
+                </div>
+                <div id="mainChart" class="w-full h-full"></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+const { createApp, ref, nextTick } = Vue;
+
+createApp({
+    setup() {
+        const file = ref(null);
+        const loading = ref(false);
+        const exporting = ref(false);
+        const result = ref(null);
+        const stats = ref(null);
+        const tab = ref('W');
+        let chart = null;
+
+        // 按钮配置：颜色、图标、是否需要全站仪数据
+        const metricOptions = [
+            { 
+                key: 'W', 
+                label: '下沉 (W)', 
+                icon: 'ph-arrow-down', 
+                reqTotal: false,
+                activeClass: 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105',
+                inactiveClass: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
+            },
+            { 
+                key: 'i', 
+                label: '倾斜 (i)', 
+                icon: 'ph-trend-up', 
+                reqTotal: false,
+                activeClass: 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-200 scale-105',
+                inactiveClass: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100'
+            },
+            { 
+                key: 'K', 
+                label: '曲率 (K)', 
+                icon: 'ph-waves', 
+                reqTotal: false,
+                activeClass: 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-200 scale-105',
+                inactiveClass: 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
+            },
+            { 
+                key: 'U', 
+                label: '水平移动 (U)', 
+                icon: 'ph-arrows-out-cardinal', 
+                reqTotal: true,
+                activeClass: 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-200 scale-105',
+                inactiveClass: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+            },
+            { 
+                key: 'E', 
+                label: '水平变形 (ε)', 
+                icon: 'ph-arrows-in-line-horizontal', 
+                reqTotal: true,
+                activeClass: 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-200 scale-105',
+                inactiveClass: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100'
+            }
+        ];
+
+<<<<<<< HEAD
+        const handleFile = (e) => file.value = e.target.files[0];
+=======
+            const { createApp, ref, nextTick } = Vue;
+
+            const api = axios.create({ baseURL: '' });
+>>>>>>> ae1dbd034fe6ae1d3fb1b1446848b2ff0d0472d4
+
+        const analyze = async () => {
+            if(!file.value) return;
+            loading.value = true;
+            const fd = new FormData();
+            fd.append('file', file.value);
+            
+            try {
+                const res = await axios.post('/api/upload', fd);
+                if(res.data.code === 200) {
+                    result.value = res.data.data;
+                    stats.value = res.data.stats;
+                    // 如果当前 tab 是 U/E 且数据不支持，重置为 W
+                    if(!result.value.is_total_station && ['U','E'].includes(tab.value)) {
+                        tab.value = 'W';
+                    }
+                    renderChart();
+                } else {
+                    alert('分析错误：' + res.data.detail);
+                }
+            } catch(e) {
+                console.error(e);
+                alert('请求失败，请检查后端服务');
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const renderChart = () => {
+            if(!result.value) return;
+            nextTick(() => {
+                const el = document.getElementById('mainChart');
+                if(chart) chart.dispose();
+                chart = echarts.init(el);
+                
+                const data = result.value;
+                const key = tab.value;
+                const dists = data.dist_X;
+                
+                const series = data.dates.map(d => {
+                    let yVals = data.results[d][key];
+                    let xVals = dists;
+                    
+                    // 数据对齐处理 (i/E 少1个点, K 少2个点)
+                    if(['i', 'E'].includes(key)) {
+                        yVals = yVals.slice(0, -1);
+                        xVals = xVals.slice(0, -1);
+                    } else if(key === 'K') {
+                        yVals = yVals.slice(1, -1);
+                        xVals = xVals.slice(1, -1);
+                    }
+                    
+                    const points = yVals.map((v, i) => [xVals[i], v]);
+                    
+                    return {
+                        name: d,
+                        type: 'line',
+                        smooth: true,
+                        showSymbol: false,
+                        data: points
+                    };
+                });
+                
+                const titles = {
+                    'W': '地表下沉 (Subsidence)',
+                    'i': '地表倾斜 (Tilt)',
+                    'K': '地表曲率 (Curvature)',
+                    'U': '水平移动 (Horizontal Movement)',
+                    'E': '水平变形 (Horizontal Deformation)'
+                };
+
+                const option = {
+                    title: { text: titles[key], left: 'center' },
+                    tooltip: { trigger: 'axis' },
+                    legend: { bottom: 0, type: 'scroll' },
+                    grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'value', 
+                        name: '距离 (m)',
+                        scale: true
+                    },
+                    yAxis: { type: 'value', scale: true },
+                    series: series
+                };
+                chart.setOption(option);
+            });
+        };
+
+        const setTab = (t) => {
+            tab.value = t;
+            renderChart();
+        };
+
+        const exportImg = async () => {
+            if(!result.value) return;
+            exporting.value = true;
+            const fd = new FormData();
+            fd.append('file', file.value);
+            fd.append('chart_type', tab.value);
+            try {
+                const res = await axios.post('/api/export-chart', fd, { responseType: 'blob' });
+                const url = window.URL.createObjectURL(new Blob([res.data]));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `学术图表_${tab.value}.png`;
+                document.body.appendChild(a);
+                a.click();
+            } catch(e) {
+                alert('导出图片失败');
+            } finally {
+                exporting.value = false;
+            }
+        };
+
+        window.addEventListener('resize', () => chart && chart.resize());
+
+        return {
+            file, loading, exporting, result, stats, tab, metricOptions,
+            handleFile, analyze, setTab, exportImg
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
