@@ -52,10 +52,10 @@
                 </div>
                 
                 <div class="mt-4 grid grid-cols-2 gap-2">
-                    <a href="/files/全站仪.csv" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1">
+                    <a :href="downloadUrl('全站仪.csv')" target="_blank" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="ph-bold ph-download-simple"></i> 全站仪模板
                     </a>
-                    <a href="/files/水准.csv" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1">
+                    <a :href="downloadUrl('水准.csv')" target="_blank" class="text-xs text-center py-2 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="ph-bold ph-download-simple"></i> 水准模板
                     </a>
                 </div>
@@ -129,6 +129,19 @@
 <script>
 const { createApp, ref, nextTick } = Vue;
 
+// ------------------------------------------------------------------
+// 核心配置区：请务必修改这里！
+// ------------------------------------------------------------------
+// 如果你在本地测试，可以用 http://localhost:8001 或者 '';
+// 如果部署上线，填你的 PythonAnywhere 地址，例如：https://yourname.pythonanywhere.com
+// 注意：不要以斜杠结尾
+// const BACKEND_URL = 'http://localhost:8001'; 
+//const BACKEND_URL = '';
+// ------------------------------------------------------------------
+const BACKEND_URL = 'mojoin.pythonanywhere.com';
+
+const api = axios.create({ baseURL: BACKEND_URL });
+
 createApp({
     setup() {
         const file = ref(null);
@@ -139,57 +152,40 @@ createApp({
         const tab = ref('W');
         let chart = null;
 
-        // 按钮配置：颜色、图标、是否需要全站仪数据
         const metricOptions = [
             { 
-                key: 'W', 
-                label: '下沉 (W)', 
-                icon: 'ph-arrow-down', 
-                reqTotal: false,
+                key: 'W', label: '下沉 (W)', icon: 'ph-arrow-down', reqTotal: false,
                 activeClass: 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105',
                 inactiveClass: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
             },
             { 
-                key: 'i', 
-                label: '倾斜 (i)', 
-                icon: 'ph-trend-up', 
-                reqTotal: false,
+                key: 'i', label: '倾斜 (i)', icon: 'ph-trend-up', reqTotal: false,
                 activeClass: 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-200 scale-105',
                 inactiveClass: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100'
             },
             { 
-                key: 'K', 
-                label: '曲率 (K)', 
-                icon: 'ph-waves', 
-                reqTotal: false,
+                key: 'K', label: '曲率 (K)', icon: 'ph-waves', reqTotal: false,
                 activeClass: 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-200 scale-105',
                 inactiveClass: 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
             },
             { 
-                key: 'U', 
-                label: '水平移动 (U)', 
-                icon: 'ph-arrows-out-cardinal', 
-                reqTotal: true,
+                key: 'U', label: '水平移动 (U)', icon: 'ph-arrows-out-cardinal', reqTotal: true,
                 activeClass: 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-200 scale-105',
                 inactiveClass: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
             },
             { 
-                key: 'E', 
-                label: '水平变形 (ε)', 
-                icon: 'ph-arrows-in-line-horizontal', 
-                reqTotal: true,
+                key: 'E', label: '水平变形 (ε)', icon: 'ph-arrows-in-line-horizontal', reqTotal: true,
                 activeClass: 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-200 scale-105',
                 inactiveClass: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100'
             }
         ];
 
-<<<<<<< HEAD
         const handleFile = (e) => file.value = e.target.files[0];
-=======
-            const { createApp, ref, nextTick } = Vue;
 
-            const api = axios.create({ baseURL: '' });
->>>>>>> ae1dbd034fe6ae1d3fb1b1446848b2ff0d0472d4
+        // 辅助函数：生成下载链接
+        const downloadUrl = (filename) => {
+            return `${BACKEND_URL}/files/${filename}`;
+        };
 
         const analyze = async () => {
             if(!file.value) return;
@@ -198,11 +194,11 @@ createApp({
             fd.append('file', file.value);
             
             try {
-                const res = await axios.post('/api/upload', fd);
+                // 使用 api 实例调用，自动带上 baseURL
+                const res = await api.post('/api/upload', fd);
                 if(res.data.code === 200) {
                     result.value = res.data.data;
                     stats.value = res.data.stats;
-                    // 如果当前 tab 是 U/E 且数据不支持，重置为 W
                     if(!result.value.is_total_station && ['U','E'].includes(tab.value)) {
                         tab.value = 'W';
                     }
@@ -212,7 +208,7 @@ createApp({
                 }
             } catch(e) {
                 console.error(e);
-                alert('请求失败，请检查后端服务');
+                alert('请求失败，请检查后端服务是否启动，或跨域设置是否正确。');
             } finally {
                 loading.value = false;
             }
@@ -233,7 +229,6 @@ createApp({
                     let yVals = data.results[d][key];
                     let xVals = dists;
                     
-                    // 数据对齐处理 (i/E 少1个点, K 少2个点)
                     if(['i', 'E'].includes(key)) {
                         yVals = yVals.slice(0, -1);
                         xVals = xVals.slice(0, -1);
@@ -290,7 +285,7 @@ createApp({
             fd.append('file', file.value);
             fd.append('chart_type', tab.value);
             try {
-                const res = await axios.post('/api/export-chart', fd, { responseType: 'blob' });
+                const res = await api.post('/api/export-chart', fd, { responseType: 'blob' });
                 const url = window.URL.createObjectURL(new Blob([res.data]));
                 const a = document.createElement('a');
                 a.href = url;
@@ -308,7 +303,7 @@ createApp({
 
         return {
             file, loading, exporting, result, stats, tab, metricOptions,
-            handleFile, analyze, setTab, exportImg
+            handleFile, analyze, setTab, exportImg, downloadUrl
         };
     }
 }).mount('#app');
