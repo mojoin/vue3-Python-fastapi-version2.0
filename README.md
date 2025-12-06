@@ -1,7 +1,7 @@
 # 地表沉降监测分析系统
 
 这是一个专业的地表沉降变形监测分析平台，支持全站仪和水准仪数据的智能分析。
-> 主要修改添加倾斜,曲率
+> 主要修改添加倾斜,曲率.再是删除不成熟的报告导出功能
 <img width="784" height="134" alt="image" src="https://github.com/user-attachments/assets/fe0fd1ca-909e-4576-8b24-a981b16f450e" />
 
 
