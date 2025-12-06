@@ -4,8 +4,5 @@ pandas==2.3.3
 numpy==2.3.5
 python-multipart==0.0.20
 python-docx==1.2.0
-<<<<<<< HEAD
 matplotlib==3.10.7
-=======
-matplotlib==3.10.7
->>>>>>> ae1dbd034fe6ae1d3fb1b1446848b2ff0d0472d4
+
